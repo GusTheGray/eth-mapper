@@ -1,2 +1,2 @@
-mod alchemy_provider;
-mod neo4j_provider;
+pub mod alchemy_provider;
+pub mod neo4j_provider;
