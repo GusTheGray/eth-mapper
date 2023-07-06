@@ -1,2 +1,7 @@
 [alchemy_websocket]
 url = ""
+
+[db_settings]
+url = "127.0.0.1:7687"
+user = "neo4j"
+password = "test12345"
