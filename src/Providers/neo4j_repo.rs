@@ -8,59 +8,87 @@ pub struct GraphRepository {
 }
 
 impl GraphRepository {
-    //Initialize the graph
+    // Initialize the graph
     pub async fn new(uri: &str, user: &str, pass: &str) -> Result<Self> {
         let graph = Arc::new(Graph::new(uri, user, pass).await?);
         Ok(GraphRepository { graph })
     }
 
-    //Function to load the transaction into the graph, along with associated nodes for each of the addresses
-    //Relationships are between the transaction and the addresses, as well as the from address and the to address
+    // Function to load the transaction into the graph, along with associated nodes for each of the addresses
+    // Relationships are between the transaction and the addresses, as well as the from address and the to address
     pub async fn load_transaction(&self, txn: TransactionEntity) -> Result<()> {
+        self.merge_node("Transaction", &txn.hash.to_string())
+            .await?;
+        self.merge_node("Address", &txn.from.address.to_string())
+            .await?;
+        self.merge_node("Address", &txn.to.address.to_string())
+            .await?;
+
+        self.merge_relationship(
+            "Transaction",
+            "Address",
+            "FROM_ADDRESS",
+            &txn.hash.to_string(),
+            &txn.from.address.to_string(),
+        )
+        .await?;
+        self.merge_relationship(
+            "Transaction",
+            "Address",
+            "TO_ADDRESS",
+            &txn.hash.to_string(),
+            &txn.to.address.to_string(),
+        )
+        .await?;
+        self.merge_relationship(
+            "Address",
+            "Address",
+            "TO",
+            &txn.from.address.to_string(),
+            &txn.to.address.to_string(),
+        )
+        .await?;
+        self.merge_relationship(
+            "Address",
+            "Address",
+            "FROM",
+            &txn.to.address.to_string(),
+            &txn.from.address.to_string(),
+        )
+        .await?;
+
+        Ok(())
+    }
+
+    // Function to merge a node into the graph
+    async fn merge_node(&self, node_type: &str, id: &str) -> Result<()> {
         let graph = self.graph.clone();
-        //Merge the transaction node
-        let result = graph
-            .run(query("MERGE (t:Transaction {id: $id})").param("id", txn.hash.to_string()))
-            .await.unwrap();
+        graph
+            .run(query(&format!("MERGE (n:{} {{id: $id}})", node_type)).param("id", id))
+            .await?;
+        Ok(())
+    }
 
-        //Merge the address node from the from address
-        let result = graph
-            .run(query("MERGE (a:Address {id: $id})").param("id", txn.from.address.to_string()))
-            .await.unwrap();
-
-        //Merge in the address node from the to address
-        let result = graph
-            .run(query("MERGE (a:Address {id: $id})").param("id", txn.to.address.to_string()))
-            .await.unwrap();
-
-        //Create the relationship from the transaction to the from address
-        let result = graph
-            .run(query("MATCH (t:Transaction {id: $id1}), (a:Address {id: $id2}) MERGE (t)-[:FROM]->(a)")
-                .param("id1", txn.hash.to_string())
-                .param("id2", txn.from.address.to_string()))
-            .await.unwrap();
-
-        //Create the relationship from the transaction to the to address
-        let result = graph
-            .run(query("MATCH (t:Transaction {id: $id1}), (a:Address {id: $id2}) MERGE (t)-[:TO]->(a)")
-                .param("id1", txn.hash.to_string())
-                .param("id2", txn.to.address.to_string()))
-            .await.unwrap();
-
-        //Create the relationship from the from address to the to address
-        let result = graph
-            .run(query("MATCH (a1:Address {id: $id1}), (a2:Address {id: $id2}) MERGE (a1)-[:TO]->(a2)")
-                .param("id1", txn.from.address.to_string())
-                .param("id2", txn.to.address.to_string()))
-            .await.unwrap();
-
-        //Create the relationship from the to address to the from address
-        let result = graph
-            .run(query("MATCH (a1:Address {id: $id1}), (a2:Address {id: $id2}) MERGE (a1)-[:FROM]->(a2)")
-                .param("id1", txn.to.address.to_string())
-                .param("id2", txn.from.address.to_string()))
-            .await.unwrap();
-
+    // Function to merge a relationship into the graph
+    async fn merge_relationship(
+        &self,
+        node_type1: &str,
+        node_type2: &str,
+        relationship: &str,
+        id1: &str,
+        id2: &str,
+    ) -> Result<()> {
+        let graph = self.graph.clone();
+        graph
+            .run(
+                query(&format!(
+                    "MATCH (n1:{} {{id: $id1}}), (n2:{} {{id: $id2}}) MERGE (n1)-[:{}]->(n2)",
+                    node_type1, node_type2, relationship
+                ))
+                .param("id1", id1)
+                .param("id2", id2),
+            )
+            .await?;
         Ok(())
     }
 }

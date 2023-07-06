@@ -9,7 +9,6 @@ async fn main() {
     let settings = settings::Settings::new().unwrap();
     let alchemy_provider = AlchemyProvider::new(settings.alchemy_websocket.url).await;
 
-
     let txns = alchemy_provider.get_block_transactions(17500980).await;
     println!("=== got {} transactions ===", txns.len());
 
