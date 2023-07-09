@@ -14,14 +14,21 @@ impl GraphRepository {
         Ok(GraphRepository { graph })
     }
 
+    pub async fn load_transactions(&self, txns: &[TransactionEntity]) -> Result<()> {
+        for txn in txns {
+            self.load_transaction(txn).await?;
+        }
+        Ok(())
+    }
+
     // Function to load the transaction into the graph, along with associated nodes for each of the addresses
     // Relationships are between the transaction and the addresses, as well as the from address and the to address
-    pub async fn load_transaction(&self, txn: TransactionEntity) -> Result<()> {
+    pub async fn load_transaction(&self, txn: &TransactionEntity) -> Result<()> {
         self.merge_node("Transaction", &txn.hash.to_string())
             .await?;
-        self.merge_node("Address", &txn.from.address.to_string())
+        self.merge_node("Address", &txn.from.address.unwrap_or_default().to_string())
             .await?;
-        self.merge_node("Address", &txn.to.address.to_string())
+        self.merge_node("Address", &txn.to.address.unwrap_or_default().to_string())
             .await?;
 
         self.merge_relationship(
@@ -29,7 +36,7 @@ impl GraphRepository {
             "Address",
             "FROM_ADDRESS",
             &txn.hash.to_string(),
-            &txn.from.address.to_string(),
+            &txn.from.address.unwrap_or_default().to_string(),
         )
         .await?;
         self.merge_relationship(
@@ -37,23 +44,23 @@ impl GraphRepository {
             "Address",
             "TO_ADDRESS",
             &txn.hash.to_string(),
-            &txn.to.address.to_string(),
+            &txn.to.address.unwrap_or_default().to_string(),
         )
         .await?;
         self.merge_relationship(
             "Address",
             "Address",
             "TO",
-            &txn.from.address.to_string(),
-            &txn.to.address.to_string(),
+            &txn.from.address.unwrap_or_default().to_string(),
+            &txn.to.address.unwrap_or_default().to_string(),
         )
         .await?;
         self.merge_relationship(
             "Address",
             "Address",
             "FROM",
-            &txn.to.address.to_string(),
-            &txn.from.address.to_string(),
+            &txn.to.address.unwrap_or_default().to_string(),
+            &txn.from.address.unwrap_or_default().to_string(),
         )
         .await?;
 
