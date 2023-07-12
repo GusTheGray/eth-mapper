@@ -1,6 +1,6 @@
 use crate::entities::*;
 use neo4rs::*;
-use std::{fmt::format, hash, sync::Arc};
+use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct GraphRepository {
@@ -53,7 +53,7 @@ impl GraphRepository {
 
     // Function to merge a node into the graph
     async fn merge_node(&self, node_type: &str, id: &str) -> Result<()> {
-//      println!("Merging node: {}, {}", node_type, id);
+        //      println!("Merging node: {}, {}", node_type, id);
         let graph = self.graph.clone();
         graph
             .run(query(&format!("MERGE (n:{} {{id: $id}})", node_type)).param("id", id))

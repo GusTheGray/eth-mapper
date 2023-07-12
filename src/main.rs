@@ -2,7 +2,6 @@ use eth_mapper::entities::TransactionEntity;
 use eth_mapper::providers::alchemy_provider::AlchemyProvider;
 use eth_mapper::providers::neo4j_repo::GraphRepository;
 use eth_mapper::settings;
-use ethers::types::Res;
 use futures::future::join_all;
 use futures::stream::{self, StreamExt};
 use indicatif::{ProgressBar, ProgressStyle};
