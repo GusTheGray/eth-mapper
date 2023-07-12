@@ -1,13 +1,16 @@
-#write a docker compose for establishing a neo4j docker container with persistent data using mounted volumes
 version: '3'
 services:
   neo4j:
-    image: neo4j:latest
-    ports:
+   image: neo4j:latest
+   mem_limit: 12g
+   mem_reservation: 12g
+   ports:
       - "7474:7474"
       - "7687:7687"
-    volumes:
+   volumes:
       - $HOME/neo4j/data:/data
       - $HOME/neo4j/logs:/logs
-    environment:
+   environment:
       - NEO4J_AUTH=neo4j/test12345
+      - NEO4J_server_memory_heap_max__size=4G
+      - NEO4J_server_memory_pagecache_size=2G

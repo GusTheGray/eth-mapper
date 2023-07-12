@@ -16,7 +16,10 @@ async fn main() {
     let starting_block = 17500980;
     let number_of_blocks = 100;
 
-    println!("=== getting {} blocks starting at {} ===", number_of_blocks, starting_block);
+    println!(
+        "=== getting {} blocks starting at {} ===",
+        number_of_blocks, starting_block
+    );
 
     let futures = (starting_block..starting_block + number_of_blocks)
         .map(|block_number| alchemy_provider.get_block_transactions(block_number));
@@ -55,13 +58,18 @@ async fn main() {
 
     txn_stream
         .chunks(batch_size)
-        .for_each_concurrent(None,|txn_batch| async {
-            let txn_entities: Vec<_> = txn_batch.into_iter().map(|txn| TransactionEntity::from(txn)).collect();
-            graph.load_transactions(&txn_entities).await.unwrap_or_else(|e| {
-                println!("error loading transactions: {:?}", e);
-            });
+        .for_each_concurrent(None, |txn_batch| async {
+            let txn_entities: Vec<_> = txn_batch
+                .into_iter()
+                .map(|txn| TransactionEntity::from(txn))
+                .collect();
+            graph
+                .load_transactions(&txn_entities)
+                .await
+                .unwrap_or_else(|e| {
+                    println!("error loading transactions: {:?}", e);
+                });
             pb.inc(txn_entities.len() as u64);
         })
         .await;
-    
 }

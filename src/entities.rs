@@ -22,10 +22,10 @@ pub struct TransactionEntity {
 impl From<Transaction> for TransactionEntity {
     fn from(txn: Transaction) -> Self {
         TransactionEntity {
-            from: AddressEntity { address: Some(txn.from) },
-            to: AddressEntity {
-                address: txn.to,
+            from: AddressEntity {
+                address: Some(txn.from),
             },
+            to: AddressEntity { address: txn.to },
             block_number: txn.block_number.unwrap().as_u64(),
             value: txn.value,
             hash: txn.hash,
