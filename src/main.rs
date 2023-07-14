@@ -9,8 +9,10 @@ use indicatif::{ProgressBar, ProgressStyle};
 #[tokio::main]
 async fn main() {
     //establish a new instance of AlchemyProvider
-    let settings = settings::Settings::new().unwrap();
-    let alchemy_provider = AlchemyProvider::new(settings.alchemy_websocket.url).await;
+    let settings = settings::Settings::new().expect("Unable to collect configs:");
+    let alchemy_provider = AlchemyProvider::new(settings.alchemy_websocket.url)
+    .await
+    .expect("Unable to init provider");
 
     let starting_block = 17500980;
     let number_of_blocks = 100;
@@ -20,7 +22,10 @@ async fn main() {
         number_of_blocks, starting_block
     );
 
-    let futures = (starting_block..starting_block + number_of_blocks)
+    //Get latest block number and set to starting_block
+    let starting_block = alchemy_provider.get_latest_block_number().await;
+
+    let futures = (starting_block..starting_block - number_of_blocks)
         .map(|block_number| alchemy_provider.get_block_transactions(block_number));
     let all_txns = join_all(futures)
         .await
