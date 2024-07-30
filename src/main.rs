@@ -15,7 +15,7 @@ async fn main() {
         .await
         .expect("Unable to init provider");
 
-    let number_of_blocks = 1000;
+    let number_of_blocks = 100;
 
     //Get latest block number and set to starting_block
     let latest_block = alchemy_provider
